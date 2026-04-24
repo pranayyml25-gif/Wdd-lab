@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 APIs Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .box {
+            width: 100px;
+            height: 100px;
+            background: #ff6b6b;
+            margin: 10px auto;
+            line-height: 100px;
+            color: white;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s;
+        }
+        .box:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+        .dropzone {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #333;
+            margin: 10px auto;
+            line-height: 150px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .dropzone.dragover {
+            border-color: #4facfe;
+            background: #e3f2fd;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            background: #4facfe;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #3d9bf5;
+        }
+        input {
+            padding: 8px;
+            width: 80%;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #location, #output {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            min-height: 20px;
+        }
+        h2 {
+            color: #4facfe;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>HTML5 APIs Demo</h1>
+    <div class="container">
+        <!-- Drag & Drop -->
+        <div class="card">
+            <h2>Drag & Drop</h2>
+            <div id="dragBox" class="box" draggable="true">Drag</div>
+            <div id="dropZone" class="dropzone">Drop Here</div>
+        </div>
+
+        <!-- Geolocation -->
+        <div class="card">
+            <h2>Geolocation</h2>
+            <button onclick="getLocation()">Get Location</button>
+            <p id="location">Click button to get your location</p>
+        </div>
+
+        <!-- Web Storage -->
+        <div class="card">
+            <h2>Web Storage</h2>
+            <input type="text" id="name" placeholder="Enter Name">
+            <br>
+            <button onclick="saveData()">Save</button>
+            <button onclick="loadData()">Load</button>
+            <button onclick="clearData()">Clear</button>
+            <p id="output">No data stored yet</p>
+        </div>
+    </div>
+
+    <script>
+        // Drag & Drop
+        const dragBox = document.getElementById("dragBox");
+        const dropZone = document.getElementById("dropZone");
+
+        dragBox.addEventListener('dragstart', function(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        });
+
+        dropZone.addEventListener('dragover', function(event) {
+            event.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', function(event) {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', function(event) {
+            event.preventDefault();
+            dropZone.classList.remove('dragover');
+            const data = event.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            dropZone.appendChild(draggedElement);
+        });
+
+        // Geolocation
+        function getLocation() {
+            const output = document.getElementById("location");
+            
+            if (navigator.geolocation) {
+                output.innerHTML = "Getting location...";
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        output.innerHTML = `
+                            <strong>Your Location:</strong><br>
+                            Latitude: ${position.coords.latitude.toFixed(6)}<br>
+                            Longitude: ${position.coords.longitude.toFixed(6)}<br>
+                            Accuracy: ${position.coords.accuracy.toFixed(0)}m
+                        `;
+                    },
+                    function(error) {
+                        let errorMsg = "Error getting location!";
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = "Permission denied!";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = "Location unavailable!";
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = "Request timeout!";
+                                break;
+                        }
+                        output.innerHTML = errorMsg;
+                    }
+                );
+            } else {
+                output.innerHTML = "Geolocation not supported by this browser";
+            }
+        }
+
+        // Web Storage
+        function saveData() {
+            const name = document.getElementById("name").value.trim();
+            if (name) {
+                localStorage.setItem("username", name);
+                document.getElementById("output").innerText = `Saved: "${name}"`;
+            } else {
+                alert("Please enter a name!");
+            }
+        }
+
+        function loadData() {
+            const name = localStorage.getItem("username");
+            const output = document.getElementById("output");
+            if (name) {
+                output.innerText = `Stored Name: "${name}"`;
+                document.getElementById("name").value = name;
+            } else {
+                output.innerText = "No data stored!";
+            }
+        }
+
+        function clearData() {
+            localStorage.removeItem("username");
+            document.getElementById("name").value = "";
+            document.getElementById("output").innerText = "Data cleared!";
+        }
+
+        // Load data on page load
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>
